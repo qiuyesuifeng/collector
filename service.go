@@ -101,22 +101,50 @@ func (s *Service) FetchKafkaMsgs(topic string, offset int64, count int64) ([]Kaf
 
 	Log.Info("[kafka consumer start!]\n")
 
-	consumed := 0
+	consumed := int64(0)
 	for {
 		select {
 		case m := <-partitionConsumer.Messages():
 			Log.Info("[index]%d[event]%s[offset]%d\n", consumed, m.Value, m.Offset)
 
-			offset = m.Offset
-
-			msg := KafkaStreamData{Data: string(m.Value), Offset: offset}
+			msg := KafkaStreamData{Data: string(m.Value), Offset: m.Offset}
 			msgs = append(msgs, msg)
 
 			consumed++
+			if consumed >= count {
+				return msgs, nil
+			}
 		case <-time.After(time.Second * 3):
-			Log.Info("Ticker...")
+			return msgs, nil
 		}
 	}
 
 	return nil, nil
+}
+
+func (s *Service) ProduceKafkaMsgs(topic string, count int) error {
+	hosts := strings.Split(GlobalConf.KafkaHost, ",")
+	producer, err := sarama.NewSyncProducer(hosts, nil)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	defer func() {
+		if err := producer.Close(); err != nil {
+			Log.Fatal("%v", err)
+		}
+	}()
+
+	Log.Info("[create kafka sync producer ok!]\n")
+
+	for i := 0; i < count; i++ {
+		msg := &sarama.ProducerMessage{Topic: topic, Value: sarama.StringEncoder(fmt.Sprintf("Mock Msg %d", i)), Partition: 0}
+		partition, offset, err := producer.SendMessage(msg)
+		if err != nil {
+			Log.Fatal("%v", err)
+		} else {
+			Log.Info("[message sent to partition %d at offset %d]\n", partition, offset)
+		}
+	}
+
+	return nil
 }

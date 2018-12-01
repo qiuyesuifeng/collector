@@ -8,7 +8,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 )
@@ -53,7 +52,9 @@ func main() {
 	addr := fmt.Sprintf(":%d", GlobalConf.Port)
 	go http.ListenAndServe(addr, engine)
 
-	go service.FetchKafkaMsgs(GlobalConf.KafkaTopic, sarama.OffsetOldest, 10)
+	// Only for test.
+	// go service.FetchKafkaMsgs(GlobalConf.KafkaTopic, sarama.OffsetOldest, 10)
+	// service.ProduceKafkaMsgs(GlobalConf.KafkaTopic, 3)
 
 	signal := InitSignal()
 	HandleSignal(signal, nil)

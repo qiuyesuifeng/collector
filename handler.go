@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 )
 
@@ -47,8 +46,9 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func DataGetHandler(w http.ResponseWriter, r *http.Request) {
 	response := &KafkaStreamResponse{}
-	vars := mux.Vars(r)
-	topic := vars["topic"]
+
+	values := r.URL.Query()
+	topic := values.Get("topic")
 	if topic == "" {
 		Log.Warn("[DataGetHandler]Parse topic argument fail[url]%s", r.RequestURI)
 		response.ErrorCode = 1
@@ -57,7 +57,7 @@ func DataGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	offset := vars["offset"]
+	offset := values.Get("offset")
 	offsetNum, err := strconv.ParseInt(offset, 10, 64)
 	if err != nil {
 		Log.Warn("[DataGetHandler]Parse offset argument fail[url]%s[offset]%s[error]%s", r.RequestURI, offset, err.Error())
@@ -67,7 +67,7 @@ func DataGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	batch := vars["batch"]
+	batch := values.Get("batch")
 	batchNum, err := strconv.ParseInt(batch, 10, 64)
 	if err != nil {
 		Log.Warn("[DataGetHandler]Parse batch argument fail[url]%s[batch]%s[error]%s", r.RequestURI, batch, err.Error())
