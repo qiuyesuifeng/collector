@@ -23,7 +23,6 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	service := NewService()
 	err := service.InitService(*conf)
 	if err != nil {
 		Log.Fatal("[Init service failed]%s", err)
@@ -45,16 +44,17 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", HomeHandler)
+	router.HandleFunc("/api/v1/data/kafka", DataGetHandler).Methods("GET")
 
-	// router.HandleFunc("/api/v1/user/{id}", v1.UserGetHandler).Methods("GET")
-	// router.HandleFunc("/api/v1/user", v1.UserPostHandler).Methods("POST")
-
-	// 设置mux作为请求路由调度器
 	engine.UseHandler(router)
 	Log.Info("[%s]Server start!", GlobalConf.AppName)
 
 	addr := fmt.Sprintf(":%d", GlobalConf.Port)
 	go http.ListenAndServe(addr, engine)
+
+	// Only for test.
+	// go service.FetchKafkaMsgs(GlobalConf.KafkaTopic, sarama.OffsetOldest, 10)
+	// service.ProduceKafkaMsgs(GlobalConf.KafkaTopic, 3)
 
 	signal := InitSignal()
 	HandleSignal(signal, nil)
