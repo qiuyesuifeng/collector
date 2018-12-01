@@ -46,22 +46,23 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `title` varchar(64) NOT NULL COMMENT '广告 Title',
   `content` varchar(256) NOT NULL COMMENT '广告内容',
   `status` varchar(16) NOT NULL COMMENT '用户状态',
+  `price` int(10) DEFAULT '0' COMMENT '单次广告点击收益，单位分',
   `create_time` timestamp NULL DEFAULT NULL COMMENT '用户创建时间',
   `update_time` timestamp NULL DEFAULT NULL COMMENT '用户最后修改时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `ads_id_key` (`ads_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-Insert Into ads values(1, 1001, "Test ADS 1", "Hello TiDB Hackathon 1", "normal", now(), now());
-Insert Into ads values(2, 1002, "Test ADS 2", "Hello TiDB Hackathon 2", "normal", now(), now());
-Insert Into ads values(3, 1003, "Test ADS 3", "Hello TiDB Hackathon 3", "abnormal", now(), now());
-Insert Into ads values(4, 1004, "Test ADS 4", "Hello TiDB Hackathon 4", "normal", now(), now());
-Insert Into ads values(5, 1005, "Test ADS 5", "Hello TiDB Hackathon 5", "normal", now(), now());
-Insert Into ads values(6, 1006, "Test ADS 6", "Hello TiDB Hackathon 6", "abnormal", now(), now());
-Insert Into ads values(7, 1007, "Test ADS 7", "Hello TiDB Hackathon 7", "normal", now(), now());
-Insert Into ads values(8, 1008, "Test ADS 8", "Hello TiDB Hackathon 8", "normal", now(), now());
-Insert Into ads values(9, 1009, "Test ADS 9", "Hello TiDB Hackathon 9", "normal", now(), now());
-Insert Into ads values(10, 1010, "Test ADS 10", "Hello TiDB Hackathon 10", "abnormal", now(), now());
+Insert Into ads values(1, 1001, "Test ADS 1", "Hello TiDB Hackathon 1", "normal", 300, now(), now());
+Insert Into ads values(2, 1002, "Test ADS 2", "Hello TiDB Hackathon 2", "normal", 500, now(), now());
+Insert Into ads values(3, 1003, "Test ADS 3", "Hello TiDB Hackathon 3", "abnormal", 400,now(), now());
+Insert Into ads values(4, 1004, "Test ADS 4", "Hello TiDB Hackathon 4", "normal", 600, now(), now());
+Insert Into ads values(5, 1005, "Test ADS 5", "Hello TiDB Hackathon 5", "normal", 400, now(), now());
+Insert Into ads values(6, 1006, "Test ADS 6", "Hello TiDB Hackathon 6", "abnormal", 200, now(), now());
+Insert Into ads values(7, 1007, "Test ADS 7", "Hello TiDB Hackathon 7", "normal", 600, now(), now());
+Insert Into ads values(8, 1008, "Test ADS 8", "Hello TiDB Hackathon 8", "normal", 500, now(), now());
+Insert Into ads values(9, 1009, "Test ADS 9", "Hello TiDB Hackathon 9", "normal", 300, now(), now());
+Insert Into ads values(10, 1010, "Test ADS 10", "Hello TiDB Hackathon 10", "abnormal", 400, now(), now());
 
 -- 广告点击信息流表
 CREATE STREAM tidb_kafka_stream_table_click(id bigint(20), user_id bigint(20), ads_id bigint(20), create_time timestamp) with ('type' =  'kafka', 'topic' = 'click');
