@@ -3,11 +3,16 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/juju/errors"
 )
 
+var service = NewService()
+
 type Service struct {
+	client sarama.Client
 }
 
 func NewService() *Service {
@@ -51,4 +56,67 @@ func (s *Service) InitService(configPath string) error {
 	Log.Info("[%s]Pprof service ok!", GlobalConf.AppName)
 
 	return nil
+}
+
+func (s *Service) FetchKafkaMsgs(topic string, offset int64, count int64) ([]KafkaStreamData, error) {
+	msgs := []KafkaStreamData{}
+
+	hosts := strings.Split(GlobalConf.KafkaHost, ",")
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+	config.Version = sarama.V2_1_0_0
+
+	var err error
+	s.client, err = sarama.NewClient(hosts, config)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	defer s.client.Close()
+
+	Log.Info("[create kafka client ok!]\n")
+
+	consumer, err := sarama.NewConsumerFromClient(s.client)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			Log.Fatal("%v", err)
+		}
+	}()
+
+	Log.Info("[create kafka consumer ok!][hosts]%v[topic]%s\n", hosts, topic)
+
+	partitionConsumer, err := consumer.ConsumePartition(topic, 0, offset)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	defer func() {
+		if err := partitionConsumer.Close(); err != nil {
+			Log.Fatal("%v", err)
+		}
+	}()
+
+	Log.Info("[kafka consumer start!]\n")
+
+	consumed := 0
+	for {
+		select {
+		case m := <-partitionConsumer.Messages():
+			Log.Info("[index]%d[event]%s[offset]%d\n", consumed, m.Value, m.Offset)
+
+			offset = m.Offset
+
+			msg := KafkaStreamData{Data: string(m.Value), Offset: offset}
+			msgs = append(msgs, msg)
+
+			consumed++
+		case <-time.After(time.Second * 3):
+			Log.Info("Ticker...")
+		}
+	}
+
+	return nil, nil
 }
