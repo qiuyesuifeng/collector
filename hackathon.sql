@@ -65,5 +65,5 @@ Insert Into ads values(9, 1009, "Test ADS 9", "Hello TiDB Hackathon 9", "normal"
 Insert Into ads values(10, 1010, "Test ADS 10", "Hello TiDB Hackathon 10", "abnormal", 400, now(), now());
 
 -- 广告点击信息流表
-CREATE STREAM tidb_kafka_stream_table_click(id bigint(20), user_id bigint(20), ads_id bigint(20), create_time timestamp) with ('type' =  'kafka', 'topic' = 'click');
+CREATE STREAM tidb_kafka_stream_table_click(user_id bigint(20), ads_id bigint(20), click_price int(10), create_time timestamp) with ('type' =  'kafka', 'topic' = 'click');
 
