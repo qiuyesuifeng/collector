@@ -14,7 +14,6 @@ type Conf struct {
 	Port        int64  `goconf:"core:port"`
 	PprofHost   string `goconf:"core:pprofHost"`
 	KafkaHost   string `goconf:"kafka:host"`
-	KafkaTopic  string `goconf:"kafka:topic"`
 }
 
 func (c *Conf) String() string {

@@ -13,6 +13,7 @@ var service = NewService()
 
 type Service struct {
 	client sarama.Client
+	offset int64
 }
 
 func NewService() *Service {
@@ -101,50 +102,32 @@ func (s *Service) FetchKafkaMsgs(topic string, offset int64, count int64) ([]Kaf
 
 	Log.Info("[kafka consumer start!]\n")
 
-	consumed := int64(0)
+	cousumed := int64(0)
 	for {
 		select {
 		case m := <-partitionConsumer.Messages():
-			Log.Info("[index]%d[event]%s[offset]%d\n", consumed, m.Value, m.Offset)
+			Log.Info("[event]%s[offset]%d[msg offset]%d\n", m.Value, s.offset, m.Offset)
 
-			msg := KafkaStreamData{Data: string(m.Value), Offset: m.Offset}
-			msgs = append(msgs, msg)
+			if s.offset == offset && offset != 0 {
+				// skip last read msg
+				offset = 0
+			} else {
+				msg := KafkaStreamData{Data: string(m.Value), Offset: m.Offset}
+				msgs = append(msgs, msg)
 
-			consumed++
-			if consumed >= count {
-				return msgs, nil
+				Log.Info("[consumed event]%s[offset]%d\n", m.Value, m.Offset)
+
+				s.offset = m.Offset
+
+				cousumed++
+				if cousumed >= count {
+					return msgs, nil
+				}
 			}
-		case <-time.After(time.Second * 3):
+		case <-time.After(time.Second * 5):
 			return msgs, nil
 		}
 	}
 
 	return nil, nil
-}
-
-func (s *Service) ProduceKafkaMsgs(topic string, count int) error {
-	hosts := strings.Split(GlobalConf.KafkaHost, ",")
-	producer, err := sarama.NewSyncProducer(hosts, nil)
-	if err != nil {
-		return errors.Trace(err)
-	}
-	defer func() {
-		if err := producer.Close(); err != nil {
-			Log.Fatal("%v", err)
-		}
-	}()
-
-	Log.Info("[create kafka sync producer ok!]\n")
-
-	for i := 0; i < count; i++ {
-		msg := &sarama.ProducerMessage{Topic: topic, Value: sarama.StringEncoder(fmt.Sprintf("Mock Msg %d", i)), Partition: 0}
-		partition, offset, err := producer.SendMessage(msg)
-		if err != nil {
-			Log.Fatal("%v", err)
-		} else {
-			Log.Info("[message sent to partition %d at offset %d]\n", partition, offset)
-		}
-	}
-
-	return nil
 }
